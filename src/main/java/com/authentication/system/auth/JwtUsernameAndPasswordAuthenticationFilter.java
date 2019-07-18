@@ -10,6 +10,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,16 +27,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+
 public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter   {
+	private String userId;
 	
 	// We use auth manager to validate the user credentials
 	private AuthenticationManager authManager;
 	
-	private final JwtConfig jwtConfig;
+	private final JwtConfig jwtConfig1;
     
+	
 	public JwtUsernameAndPasswordAuthenticationFilter(AuthenticationManager authManager, JwtConfig jwtConfig) {
 		this.authManager = authManager;
-		this.jwtConfig = jwtConfig;
+		this.jwtConfig1 = jwtConfig;
 		
 		// By default, UsernamePasswordAuthenticationFilter listens to "/login" path. 
 		// In our case, we use "/auth". So, we need to override the defaults.
@@ -52,6 +58,8 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
 			// 2. Create auth object (contains credentials) which will be used by auth manager
 			UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
 					creds.getUsername(), creds.getPassword(), Collections.emptyList());
+			
+			this.userId = creds.getUsername();
 			
 			// 3. Authentication manager authenticate the user, and use UserDetialsServiceImpl::loadUserByUsername() method to load the user.
 			return authManager.authenticate(authToken);
@@ -75,15 +83,35 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
 			.claim("authorities", auth.getAuthorities().stream()
 				.map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
 			.setIssuedAt(new Date(now))
-			.setExpiration(new Date(now + jwtConfig.getExpiration() * 1000))  // in milliseconds
-			.signWith(SignatureAlgorithm.HS512, jwtConfig.getSecret().getBytes())
+			.setExpiration(new Date(now + jwtConfig1.getExpiration() * 1000))  // in milliseconds
+			.signWith(SignatureAlgorithm.HS512, jwtConfig1.getSecret().getBytes())
 			.compact();
 		
 		// Add token to header
-		
+		dataCredential(userId, token);
 		System.out.println("ini token: "+token);
-		response.addHeader(jwtConfig.getHeader(), jwtConfig.getPrefix() + token);
+		response.addHeader(jwtConfig1.getHeader(), jwtConfig1.getPrefix() + token);
+		
 	}
+	
+	@Async("transactionPoolExecutor")
+	public void dataCredential(String userId, String token) {
+		String result = "";
+		HttpClient client = new HttpClient();
+		GetMethod getMethod = new GetMethod("http://localhost:8100/"+userId+"/"+token);
+		try {
+			client.executeMethod(getMethod);
+			result = getMethod.getResponseBodyAsString();
+			System.out.println(result);
+			System.out.println(userId+" , "+token);
+		} catch (Exception e) {
+			logger.error(e);
+		} finally {
+			getMethod.releaseConnection();
+		}
+	}
+	
+	
 	
 	// A (temporary) class just to represent the user credentials
 	private static class UserCredentials {

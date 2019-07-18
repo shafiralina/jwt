@@ -4,6 +4,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,13 +17,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import com.authentication.system.common.JwtConfig;
 
 @EnableWebSecurity 	// Enable security config. This annotation denotes config for spring security.
+@Order(1000)
 public class SecurityCredentialsConfig extends WebSecurityConfigurerAdapter {
 	
 	@Autowired
 	private UserDetailsService userDetailsService;
 
 	@Autowired
-	private JwtConfig jwtConfig;
+	private JwtConfig jwtConfig1;
 	
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -39,10 +41,10 @@ public class SecurityCredentialsConfig extends WebSecurityConfigurerAdapter {
 		    // What's the authenticationManager()? 
 		    // An object provided by WebSecurityConfigurerAdapter, used to authenticate the user passing user's credentials
 		    // The filter needs this auth manager to authenticate the user.
-		    .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig))	
+		    .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig1))	
 		.authorizeRequests()
 		    // allow all POST requests 
-		    .antMatchers(HttpMethod.POST, jwtConfig.getUri()).permitAll()
+		    .antMatchers(HttpMethod.POST, jwtConfig1.getUri()).permitAll()
 		    // any other requests must be authenticated
 		    .anyRequest().authenticated();
 	}
@@ -55,10 +57,10 @@ public class SecurityCredentialsConfig extends WebSecurityConfigurerAdapter {
 		auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
 	}
 	
-	@Bean
-	public JwtConfig jwtConfig() {
-        	return new JwtConfig();
-	}
+//	@Bean
+//	public JwtConfig jwtConfig() {
+//        	return new JwtConfig();
+//	}
 	
 	@Bean
 	public BCryptPasswordEncoder passwordEncoder() {
