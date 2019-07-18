@@ -14,7 +14,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import com.authentication.system.common.JwtConfig;
+import com.eureka.common.security.JwtConfig;
+
 
 @EnableWebSecurity 	// Enable security config. This annotation denotes config for spring security.
 @Order(1000)

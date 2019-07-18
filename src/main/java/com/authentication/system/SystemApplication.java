@@ -10,7 +10,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import com.authentication.system.common.JwtConfig;
+import com.eureka.common.security.JwtConfig;
+
 
 @SpringBootApplication
 @EnableEurekaClient
