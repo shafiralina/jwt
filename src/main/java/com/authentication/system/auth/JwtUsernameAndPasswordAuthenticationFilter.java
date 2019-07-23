@@ -78,10 +78,10 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
 	@Override
 	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
 			Authentication auth) throws IOException, ServletException {
-		String channel1 = request.getHeader(jwtConfig1.getChannel());
-		System.out.println("ini adalah channel = "+channel1);
+		String channel = request.getHeader("Channel");
+		System.out.println("ini adalah channel = "+channel);
 		
-		if (channel1.equals("MobileBanking")) {		
+		if (channel.equals("MobileBanking")) {		
 			time = jwtConfig1.getExpiration1();
 		}
 		else {

@@ -16,10 +16,10 @@ import com.eureka.common.security.JwtConfig;
 @SpringBootApplication
 @EnableEurekaClient
 @EnableAsync
-public class SystemApplication {
+public class AuthenticationApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SystemApplication.class, args);
+		SpringApplication.run(AuthenticationApplication.class, args);
 	}
 	
 	@Bean
