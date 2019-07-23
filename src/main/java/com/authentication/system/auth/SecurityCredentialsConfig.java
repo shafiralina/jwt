@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import com.eureka.common.security.JwtConfig;
 
 
+
 @EnableWebSecurity 	// Enable security config. This annotation denotes config for spring security.
 @Order(1000)
 public class SecurityCredentialsConfig extends WebSecurityConfigurerAdapter {

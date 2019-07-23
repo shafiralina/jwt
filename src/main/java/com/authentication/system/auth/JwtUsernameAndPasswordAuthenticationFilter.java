@@ -12,6 +12,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,15 +29,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
-
 public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter   {
-	private String userId;
 	
+	@Autowired
+	private Environment env;
 	// We use auth manager to validate the user credentials
 	private AuthenticationManager authManager;
 	
 	private final JwtConfig jwtConfig1;
-    
+	
+    private int time;
+    private String userId;
 	
 	public JwtUsernameAndPasswordAuthenticationFilter(AuthenticationManager authManager, JwtConfig jwtConfig) {
 		this.authManager = authManager;
@@ -74,24 +78,29 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
 	@Override
 	protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
 			Authentication auth) throws IOException, ServletException {
+		String channel1 = request.getHeader(jwtConfig1.getChannel());
+		System.out.println("ini adalah channel = "+channel1);
 		
+		if (channel1.equals("MobileBanking")) {		
+			time = jwtConfig1.getExpiration1();
+		}
+		else {
+			time = jwtConfig1.getExpiration2(); 
+		}
 		Long now = System.currentTimeMillis();
 		String token = Jwts.builder()
-			.setSubject(auth.getName())	
-			// Convert to list of strings. 
-			// This is important because it affects the way we get them back in the Gateway.
-			.claim("authorities", auth.getAuthorities().stream()
-				.map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
-			.setIssuedAt(new Date(now))
-			.setExpiration(new Date(now + jwtConfig1.getExpiration() * 1000))  // in milliseconds
-			.signWith(SignatureAlgorithm.HS512, jwtConfig1.getSecret().getBytes())
-			.compact();
-		
-		// Add token to header
-		dataCredential(userId, token);
-		System.out.println("ini token: "+token);
-		response.addHeader(jwtConfig1.getHeader(), jwtConfig1.getPrefix() + token);
-		
+				.setSubject(auth.getName())	
+				// Convert to list of strings. 
+				// This is important because it affects the way we get them back in the Gateway.
+				.claim("authorities", auth.getAuthorities().stream()
+					.map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
+				.setIssuedAt(new Date(now))
+				.setExpiration(new Date(now + time * 1000))  // in milliseconds
+				.signWith(SignatureAlgorithm.HS512, jwtConfig1.getSecret().getBytes())
+				.compact();
+			// Add token to header
+			dataCredential(userId, token);
+			response.addHeader(jwtConfig1.getHeader(), jwtConfig1.getPrefix()+" "+ token);
 	}
 	
 	@Async("transactionPoolExecutor")
@@ -102,8 +111,8 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
 		try {
 			client.executeMethod(getMethod);
 			result = getMethod.getResponseBodyAsString();
-			System.out.println(result);
-			System.out.println(userId+" , "+token);
+			System.out.println("USER ID = "+userId);
+			System.out.println("TOKEN = "+token);
 		} catch (Exception e) {
 			logger.error(e);
 		} finally {
