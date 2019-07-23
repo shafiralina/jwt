@@ -9,7 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import com.common.security.JwtConfig;
+import com.authentication.system.common.JwtConfig;
+
+
 
 
 
@@ -22,15 +24,15 @@ public class AuthenticationApplication {
 		SpringApplication.run(AuthenticationApplication.class, args);
 	}
 	
-//	@Bean
-//	public JwtConfig jwtConfig1() {
-//        	return new JwtConfig();
-//	}
-//	
-//	@Bean
-//	public JwtConfig jwtConfig() {
-//        	return new JwtConfig();    	
-//	}
+	@Bean
+	public JwtConfig jwtConfig1() {
+        	return new JwtConfig();
+	}
+	
+	@Bean
+	public JwtConfig jwtConfig() {
+        	return new JwtConfig();    	
+	}
 
 	@Bean(name = "transactionPoolExecutor")
 	public Executor getAsyncExecutor() {
