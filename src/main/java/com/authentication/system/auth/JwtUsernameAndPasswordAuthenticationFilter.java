@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -23,12 +24,14 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
-import com.eureka.common.security.JwtConfig;
+import com.common.security.JwtConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
+
+@PropertySource(value = "classpath:/config/common.properties")
 public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter   {
 	
 	@Autowired
@@ -36,18 +39,18 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
 	// We use auth manager to validate the user credentials
 	private AuthenticationManager authManager;
 	
-	private final JwtConfig jwtConfig1;
+//	private final JwtConfig jwtConfig1;
 	
     private int time;
     private String userId;
 	
-	public JwtUsernameAndPasswordAuthenticationFilter(AuthenticationManager authManager, JwtConfig jwtConfig) {
+	public JwtUsernameAndPasswordAuthenticationFilter(AuthenticationManager authManager) {
 		this.authManager = authManager;
-		this.jwtConfig1 = jwtConfig;
+		
 		
 		// By default, UsernamePasswordAuthenticationFilter listens to "/login" path. 
 		// In our case, we use "/auth". So, we need to override the defaults.
-		this.setRequiresAuthenticationRequestMatcher(new AntPathRequestMatcher(jwtConfig.getUri(), "POST"));
+		this.setRequiresAuthenticationRequestMatcher(new AntPathRequestMatcher("/auth/**", "POST"));
 	}
 	
 	@Override
@@ -82,10 +85,10 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
 		System.out.println("ini adalah channel = "+channel);
 		
 		if (channel.equals("MobileBanking")) {		
-			time = jwtConfig1.getExpiration1();
+			time = Integer.parseInt("5");
 		}
 		else {
-			time = jwtConfig1.getExpiration2(); 
+			time = Integer.parseInt("30"); 
 		}
 		Long now = System.currentTimeMillis();
 		String token = Jwts.builder()
@@ -96,11 +99,11 @@ public class JwtUsernameAndPasswordAuthenticationFilter extends UsernamePassword
 					.map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
 				.setIssuedAt(new Date(now))
 				.setExpiration(new Date(now + time * 1000))  // in milliseconds
-				.signWith(SignatureAlgorithm.HS512, jwtConfig1.getSecret().getBytes())
+				.signWith(SignatureAlgorithm.HS512, "JwtSecretKey".getBytes())
 				.compact();
 			// Add token to header
 			dataCredential(userId, token);
-			response.addHeader(jwtConfig1.getHeader(), jwtConfig1.getPrefix()+" "+ token);
+			response.addHeader("Authorization", "Bearer"+" "+ token);
 	}
 	
 	@Async("transactionPoolExecutor")

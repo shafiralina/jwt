@@ -4,7 +4,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,19 +16,22 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import com.eureka.common.security.JwtConfig;
+import com.common.security.JwtConfig;
 
 
-
+@PropertySource(value = "classpath:/config/common.properties")
 @EnableWebSecurity 	// Enable security config. This annotation denotes config for spring security.
 @Order(1000)
 public class SecurityCredentialsConfig extends WebSecurityConfigurerAdapter {
 	
 	@Autowired
+	private Environment env;
+	
+	@Autowired
 	private UserDetailsService userDetailsService;
 
-	@Autowired
-	private JwtConfig jwtConfig1;
+//	@Autowired
+//	private JwtConfig jwtConfig1;
 	
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -43,10 +48,10 @@ public class SecurityCredentialsConfig extends WebSecurityConfigurerAdapter {
 		    // What's the authenticationManager()? 
 		    // An object provided by WebSecurityConfigurerAdapter, used to authenticate the user passing user's credentials
 		    // The filter needs this auth manager to authenticate the user.
-		    .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig1))	
+		    .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager()))	
 		.authorizeRequests()
 		    // allow all POST requests 
-		    .antMatchers(HttpMethod.POST, jwtConfig1.getUri()).permitAll()
+		    .antMatchers(HttpMethod.POST, "/auth/**").permitAll()
 		    // any other requests must be authenticated
 		    .anyRequest().authenticated();
 	}
